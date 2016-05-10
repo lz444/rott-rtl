@@ -28,6 +28,11 @@
                         (char->integer #\T)
                         (char->integer #\C)
                         0))
+(define rtr-signature (bytes
+                        (char->integer #\R)
+                        (char->integer #\T)
+                        (char->integer #\R)
+                        0))
 (define rtl-version-1.01 (bytes 1 1 0 0))
 
 (define sizeof-signature 4)

@@ -119,6 +119,7 @@
 (define open-file-button-msg "Open File")
 (define type-rtl-msg "Single Player")
 (define type-rtc-msg "Comm-Bat™")
+(define type-rtr-msg "RandROTT")
 (define wait-msg "Loading map, please wait...")
 (define type-unknown-msg "")
 (define no-file-loaded-msg "(no file loaded)")
@@ -147,7 +148,7 @@
 ;; Global variables to hold state
 (define loaded-path "")           ;; Loaded file
 (define current-scaling 2)        ;; Display size of tiles, multiplied by base-tile-size
-(define current-type '())         ;; Will be 'rtl or 'rtc, or '() for no file loaded
+(define current-type '())         ;; Will be 'rtl, 'rtc, 'rtr, or '() for no file loaded
 (define current-map-list '())     ;; All the levels in the RTL/RTC file
 (define current-map-num 0)        ;; Which map is currently loaded, starting from 0
 (define current-map-header '())   ;; Map header information
@@ -207,6 +208,8 @@
      (send filetype-message set-label type-rtl-msg))
     ((eq? current-type 'rtc)
      (send filetype-message set-label type-rtc-msg))
+    ((eq? current-type 'rtr)
+     (send filetype-message set-label type-rtr-msg))
     (else
       (send filetype-message set-label type-unknown-msg))))
 
@@ -244,8 +247,8 @@
   (define version (read-rtl-version inport))
   (define retval
     (cond 
-      ((not (or (bytes=? signature rtl-signature) (bytes=? signature rtc-signature)))
-       (message-box "File Error" "This is not an RTL/RTC file." #f '(stop ok))
+      ((not (or (bytes=? signature rtl-signature) (bytes=? signature rtc-signature) (bytes=? signature rtr-signature)))
+       (message-box "File Error" "This is not an RTL/RTC/RTR file." #f '(stop ok))
        #f)
       ((not (bytes=? version rtl-version-1.01))
        (message-box "File Error" "RTL version is not 1.01." #f '(stop ok))
@@ -269,7 +272,9 @@
       ((bytes=? signature rtl-signature)
        (set! current-type 'rtl))
       ((bytes=? signature rtc-signature)
-       (set! current-type 'rtc))))
+       (set! current-type 'rtc))
+      ((bytes=? signature rtr-signature)
+       (set! current-type 'rtr))))
   retval)
 
 ;; Reads in the header for the given map, then uncompresses the map data.
@@ -285,6 +290,8 @@
   ;; This is harder than just blinding adding or subtracting 1 to n, but this
   ;; should handle the case where an RTL file has maps not defined contiguously,
   ;; although I have never seen such a file.
+  ;; UPDATE: The RANDROTT.RTR file _does_ have non-contiguous maps! This code
+  ;; handles it no problem at all.
   (define n
     (cond
       ((eq? 'first mapnum)
